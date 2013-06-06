@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-
+힘들면 아프다고 말해 니가 얘기해 주길 바래~
 /**
  * Created with IntelliJ IDEA.
  * User: WanH
