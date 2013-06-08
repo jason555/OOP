@@ -1,19 +1,30 @@
-// 이혁기 여기에다 코드를 올려.
 // 이영호가 올린거임
 // MapModule.java
+package term.map;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.*;
 import java.util.*;
 
+import javax.swing.*;
+import javax.swing.border.*;
+
 class MapCalc {
-  private int[][] rooms, availablePaths;	// availablePaths는 path를 찾기 위함
+	private int[][] rooms, availablePaths;	// availablePaths는 path를 찾기 위함
 	ArrayList<Point> searchQueue;			// path를 찾기 위함
 	
+	// characters
 	public final static int SCARLET = 0;
 	public final static int MUSTARD = 1;
 	public final static int WHITE = 2;
 	public final static int GREEN = 3;
 	public final static int PEACOCK = 4;
 	public final static int PLUM = 5;
-	int[][] playerPos;
+	static int[][] playerPos;
+	static JLabel[] playerImg;
+	// characters end
 	
 	// 맵은 벽까지 26*31
 	public final static int WIDTH = 26;
@@ -52,42 +63,32 @@ class MapCalc {
 	private int[][] enterZone = {{6, 6}, {6, 12}, {6, 18}, {7, 23}, {8, 13}, {8, 17}, {11, 8}, {11, 17}, {13, 20}, {13, 3}, {15, 12}, {16, 22}, {17, 9}, {18, 17}, {21, 22}, {22, 21}, {23, 9}, {23, 12}};
 	// ?와 f가 동시에, 5로 표시
 	private int[][] cardFrontZone = {{17, 10}/*?f*/};
-	/*
-	private int[][] passZone = {{1, 10}, {1, 15},
-		{2, 8}, {2, 9}, {2, 10}, {2, 15}, {2, 16}, {2, 17},
-		{3, 7}, {3, 8}, {3, 17}, {3, 18},
-		{4, 7}, {4, 8}, {4, 17}, {4, 18},
-		{5, 8}, {5, 17}, {5, 18},		// {5 7}은 ?
-		{6, 7}, {6, 18},
-		{7, 7}, {7, 8}, {7, 17}, {7, 19}, {7, 20}, {7, 21}, {7, 22}, {7, 23}, {7, 24},
-		{8, 1}, {8, 2}, {8, 3}, {8, 4}, {8, 6}, {8, 7}, {8, 8}, {8, 17}, {8, 18}, {8, 19}, {8, 20}, {8, 21}, {8, 22}, {8, 23},
-		{9, 2}, {9, 3}, {9, 4}, {9, 5}, {9, 6}, {9, 7}, {9, 9}, {9, 11}, {9, 12}, {9, 13}, {9, 14}, {9, 16}, {9, 17}, {9, 18},
-		{10, 6}, {10, 7}, {10, 8}, {10, 9}, {10, 10}, {10, 11}, {10, 12}, {10, 13}, {10, 14}, {10, 15}, {10, 16}, {10, 17},
-		{11, 9}, {11, 16}, {11, 18},
-		{12, 9}, {12, 16}, {12, 17}, {12, 18},
-		{13, 10}, {13, 16}, {13, 17}, {13, 18},
-		{14, 9}, {14, 10}, {14, 17}, {14, 18}, {14, 19}, {14, 20},
-		{15, 9}, {15, 10}, {15, 16}, {15, 17}, {15, 18},
-		{16, 9}, {16, 16}, {16, 17},
-		{17, 2}, {17, 3}, {17, 4}, {17, 5}, {17, 6}, {17, 8}, {17, 9},
-		{18, 1}, {18, 2}, {18, 3}, {18, 4}, {18, 5}, {18, 6}, {18, 7}, {18, 8}, {18, 9}, {18, 10}, {18, 11}, {18, 14}, {18, 15}, {18, 16}, {18, 17},
-		{19, 2}, {19, 3}, {19, 4}, {19, 5}, {19, 6}, {19, 8}, {19, 9}, {19, 16}, {19, 17}, {19, 18},
-		{20, 8}, {20, 9}, {20, 16}, {20, 17}, {20, 18}, {20, 20}, {20, 21}, {20, 22}, {20, 23}, {20, 24},
-		{21, 8}, {21, 9}, {20, 17}, {20, 19}, {20, 20}, {20, 21}, {20, 22}, {20, 23}, {20, 24},
-		{22, 8}, {22, 9}, {22, 16}, {22, 17},
-		{23, 8}, {23, 9}, {23, 16}, {23, 17},
-		{24, 8}, {24, 9}, {24, 16}, {24, 17},
-		{25, 8}, {25, 17}
+	
+	// 캐릭터가 방에 있을 때 위치할 좌표
+	private static int[][][] inRoomZone = {{{2, 1}, {2, 3}, {2, 5}, {4, 1}, {4, 3}, {4, 5}},
+			{{2, 10}, {2, 12}, {4, 10}, {4, 12}, {6, 10}, {6, 12}},
+			{{2, 16}, {2, 18}, {4, 17}, {4, 19}, {6, 16}, {6, 18}},
+			{{1, 23}, {2, 24}, {4, 23}, {5, 24}, {7, 23}, {8, 24}},
+			{{14, 1}, {14, 3}, {14, 5}, {16, 1}, {16, 3}, {16, 5}},
+			{{14, 12}, {14, 14}, {14, 17}, {16, 12}, {16, 14}, {16, 17}},
+			{{14, 20}, {14, 22}, {14, 24}, {16, 21}, {16, 23}, {16, 25}},
+			{{24, 1}, {24, 3}, {24, 5}, {27, 2}, {27, 4}, {27, 6}},
+			{{23, 12}, {23, 15}, {26, 11}, {26, 14}, {29, 12}, {29, 15}},
+			{{24, 22}, {24, 24}, {26, 22}, {26, 24}, {28, 22}, {28, 24}}
 	};
 	
-	private int[][] cardZone = {{5, 7}, {7, 18}, {9, 8}, {11, 17}, {12, 10}, {14, 22}, {16, 10}, {17, 16}, {18, 6}, {20, 9}, {20, 19}};
+	MapEngine mEngine;
 	
-	private int[][] frontZone = {{6, 8}, {6, 17}, {6, 19}, {8, 5}, {9, 10}, {9, 15}, {10, 18}, {11, 10}, {13, 9}, {14, 16}, {14, 21}, {14, 23}, {17, 7}, {17, 10}, {17, 17}, {18, 12}, {18, 13}, {19, 7}, {21, 16}, {21, 18}};
 	
-	private int[][] enterZone = {{6, 9}, {6, 16}, {6, 20}, {7, 5}, {8, 10}, {8, 15}, {10, 19}, {11, 11}, {13, 8}, {14, 15}, {15, 21}, {13, 23}, {16, 7}, {17, 11}, {17, 18}, {19, 12}, {19, 13}, {20, 7}, {21, 15}, {22, 18}};
-	*/
 	public MapCalc() {
-		this.playerPos = initPlayerPos();
+		mEngine = new MapEngine();
+		
+		playerPos = initPlayerPos();
+		playerImg = new JLabel[6];
+		for(int i=0 ; i<6 ; i++) {
+			playerImg[i] = new JLabel(new ImageIcon("./resource/char.png"));
+			playerImg[i].setPreferredSize(new Dimension(18, 30));
+		}
 		this.rooms = initRooms();
 	}
 	
@@ -114,23 +115,26 @@ class MapCalc {
 			r[cardFrontZone[i][0]][cardFrontZone[i][1]] = 5;
 		}
 		
+		for(int i=0 ; i<6 ; i++)
+			mEngine.gridChange(playerPos[i][0], playerPos[i][1], playerImg[i]);
+		
 		return r;
 	}
 	
 	private int[][] initPlayerPos() {
 		int[][] pos = new int[6][2];
-		pos[SCARLET][0] = 19;
-		pos[SCARLET][1] = 29;
-		pos[MUSTARD][0] = 8;
-		pos[MUSTARD][1] = 29;
-		pos[WHITE][0] = 1;
-		pos[WHITE][1] = 20;
-		pos[GREEN][0] = 1;
-		pos[GREEN][1] = 10;
-		pos[PEACOCK][0] = 7;
-		pos[PEACOCK][1] = 1;
-		pos[PLUM][0] = 21;
-		pos[PLUM][1] = 1;
+		pos[SCARLET][0] = 29;
+		pos[SCARLET][1] = 19;
+		pos[MUSTARD][0] = 29;
+		pos[MUSTARD][1] = 8;
+		pos[WHITE][0] = 20;
+		pos[WHITE][1] = 1;
+		pos[GREEN][0] = 10;
+		pos[GREEN][1] = 1;
+		pos[PEACOCK][0] = 1;
+		pos[PEACOCK][1] = 7;
+		pos[PLUM][0] = 1;
+		pos[PLUM][1] = 21;
 		
 		return pos;
 	}
@@ -161,10 +165,10 @@ class MapCalc {
 	}
 	
 	public void findPaths(int character, int length) {
-		int x = this.playerPos[character][0];
-		int y = this.playerPos[character][1];
+		int x = playerPos[character][1];
+		int y = playerPos[character][0];
 		if(!isInBound(x, y)) return;
-		if(rooms[x][y] < 1 || rooms[x][y] > 5)	return;
+	//	if(rooms[x][y] < 1 || rooms[x][y] > 5)	return;
 		
 		// 배열 복사
 		this.availablePaths = new int[WIDTH][HEIGHT];
@@ -172,11 +176,14 @@ class MapCalc {
 			System.arraycopy(rooms[i], 0, availablePaths[i], 0, rooms[i].length);
 		}
 		
-		// 다른 말들 위치 표시
-	//	for(int i=0 ; i<6 ; i++)
+		// 캐릭터 표시
+		for(int i=0 ; i<6 ; i++)
+			availablePaths[playerPos[i][1]][playerPos[i][0]] += 10;
+		
 		
 		// 방 안에서 출발할 경우 가능한 시작 좌표들을 불러옴
 		int roomNum = isInRoom(x, y);
+		System.out.println(roomNum);
 		ArrayList<Point> roomExits = setRoomValue(roomNum);
 		
 		int exitCount = 0;
@@ -214,6 +221,18 @@ class MapCalc {
 			}
 		}
 		
+		// button 활성화
+		for(int i=0 ; i<WIDTH ; i++) {
+			for(int j=0 ; j<HEIGHT ; j++) {
+				Border activeBorder = new LineBorder(Color.BLUE, 1);
+				if(availablePaths[i][j] >= 20) {
+					mEngine.mapButtons[j][i].setBorder(activeBorder);
+					mEngine.mapButtons[j][i].addActionListener(new MoveActionListener(j, i, character, mEngine));
+				}
+			}
+		}
+		
+		
 		this.printPathMap();
 	}
 	
@@ -246,16 +265,11 @@ class MapCalc {
 	}
 	
 	public int isInRoom(int x, int y) {
-		if(x == 6 && y == 6) return 1;
-		if((x == 11 && y == 8) || x == 13 && y == 3) return 2;
-		if(x == 17 && y == 9) return 3;
-		if(x == 23 && y == 9) return 4;
-		if((x == 6 && (y == 12 || y == 18)) || (x == 8 && (y == 13 || y == 17)) ) return 5;
-		if((x == 11 && y == 17) || (x == 15 && y == 12) || (x == 18 && y == 17)) return 6;
-		if(x == 23 && y == 12) return 7;
-		if(x == 7 && y == 23) return 8;
-		if((x == 13 && y == 20) || (x == 16 && y == 22)) return 9;
-		if((x == 21 && y == 22) || (x == 22 && y == 21)) return 10;
+		for(int i=0 ; i<10 ; i++) {				// 방 갯수
+			for(int j=0 ; j<6 ; j++) {
+				if(inRoomZone[i][j][0] == y && inRoomZone[i][j][1] == x) return i+1;
+			}
+		}
 		return 0;
 	}
 	
@@ -305,6 +319,47 @@ class MapCalc {
 		return exitList;
 	}
 	
+	public static int[] roomIn(int room) {
+		int[] roomPos = new int[2];
+		boolean alreadyExist = false;		// 방에 할당된 공간에 이미 다른 말이 있는지
+
+		for(int i=0 ; i<6 ; i++) {
+			roomPos[0] = inRoomZone[room-1][i][0];
+			roomPos[1] = inRoomZone[room-1][i][1];
+			
+			for(int j=0 ; j<6 ; j++) {
+				if(playerPos[j][0] == roomPos[0] && playerPos[j][1] == roomPos[1]) {
+					alreadyExist = true;
+					break;
+				}
+				if(j == 5) alreadyExist = false;
+			}
+			
+			if(alreadyExist) continue;
+			else break;
+		}
+		
+		return roomPos;
+	}
+	
+	// 캐릭터가 현재 어느 위치에 있는지 반환하는 정적 메소드
+	public static int[] getCharacterPosition(int character) {
+		int[] charPos = new int[2];
+		charPos[0] = playerPos[character][0];
+		charPos[1] = playerPos[character][1];
+		
+		return charPos;
+	}
+	
+	public static void setCharacterPosition(int character, int x, int y) {
+		playerPos[character][0] = x;
+		playerPos[character][1] = y;
+	}
+	
+	public static JLabel getCharacterImage(int character) {
+		return playerImg[character];
+	}
+	
 }
 
 class Point {
@@ -334,10 +389,143 @@ class Point {
 	}
 }
 
+// ActionLinstener 상속받음
+class MoveActionListener implements ActionListener {
+	private int x, y, character;
+	MapEngine mEngine;
+	
+	public MoveActionListener(int x, int y, int character, MapEngine mEngine) {
+		this.x = x;
+		this.y = y;
+		this.character = character;
+		this.mEngine = mEngine;
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+		int[] charPos;
+		charPos = MapCalc.getCharacterPosition(character);
+		mEngine.gridChange(charPos[0], charPos[1], mEngine.mapButtons[charPos[0]][charPos[1]]);
+		
+		int roomNum = roomEnter(y, x);
+		System.out.println(roomNum + ": " + x + ", " + y);
+		if(roomNum > 0) {
+			charPos = MapCalc.roomIn(roomNum);
+			mEngine.gridChange(charPos[0], charPos[1], MapCalc.getCharacterImage(character));
+			MapCalc.setCharacterPosition(character, charPos[0], charPos[1]);
+		} else {
+			mEngine.gridChange(x, y, MapCalc.getCharacterImage(character));
+			MapCalc.setCharacterPosition(character, x, y);
+		}
+	}
+	
+	public int roomEnter(int x, int y) {
+		if(x == 6 && y == 6) return 1;
+		if((x == 11 && y == 8) || x == 13 && y == 3) return 2;
+		if(x == 17 && y == 9) return 3;
+		if(x == 23 && y == 9) return 4;
+		if((x == 6 && (y == 12 || y == 18)) || (x == 8 && (y == 13 || y == 17)) ) return 5;
+		if((x == 11 && y == 17) || (x == 15 && y == 12) || (x == 18 && y == 17)) return 6;
+		if(x == 23 && y == 12) return 7;
+		if(x == 7 && y == 23) return 8;
+		if((x == 13 && y == 20) || (x == 16 && y == 22)) return 9;
+		if((x == 21 && y == 22) || (x == 22 && y == 21)) return 10;
+		return 0;
+	}
+}
+
+
 public class MapModule {
 	public static void main(String[] args) {
 		MapCalc map = new MapCalc();
-		map.printMap();
+	//	map.printMap();
 		map.findPaths(MapCalc.PLUM, 11);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// MapEngine.java
+package term.map;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.border.*;
+import java.io.*;
+
+class BgPanel extends JPanel {
+    Image bg = new ImageIcon("./resource/board.png").getImage();
+    @Override
+    public void paintComponent(Graphics g) {
+        g.drawImage(bg, 0, 0, 780, 930,this);
+    }
+}
+
+public class MapEngine {
+	private JFrame bgFrame;
+	private JPanel bgPanel;
+	private JPanel posPanel;
+	JButton[][] mapButtons;
+	
+	public MapEngine() {
+		bgFrame = new JFrame();
+		bgFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		bgPanel = new BgPanel();
+		bgPanel.setLayout(null);
+		
+		mapButtons = new JButton[MapCalc.HEIGHT][MapCalc.WIDTH];
+		
+		posPanel = new JPanel();
+		posPanel.setLayout(new GridLayout(MapCalc.HEIGHT, MapCalc.WIDTH, 0, 0));
+		posPanel.setOpaque(false);
+
+		posPanel.setBounds(0, 0, 780, 930);
+		for(int i=0 ; i<MapCalc.HEIGHT ; i++) {
+			for(int j=0 ; j<MapCalc.WIDTH ; j++) {
+				mapButtons[i][j] = new JButton();
+				mapButtons[i][j].setPreferredSize(new Dimension(30, 30));
+			//	btn.setBackground(Color.white);
+				mapButtons[i][j].setOpaque(false);
+				mapButtons[i][j].setContentAreaFilled(false);
+				Border defaultBorder = new LineBorder(Color.WHITE, 1);
+				mapButtons[i][j].setBorder(defaultBorder);
+		//		mapButtons[i][j].setBorderPainted(false);
+
+				posPanel.add(mapButtons[i][j]);
+			}
+		}
+		
+		
+		bgPanel.add(posPanel);
+		
+		bgFrame.setContentPane(bgPanel);
+		bgFrame.setSize(1500, 980);
+		bgFrame.setVisible(true);
+	}
+	
+	// 캐릭터 이동 시 원래 자리를 다시 button으로 만들고 이동한 곳에 캐릭터를 위치시키는 메서드
+	public void gridChange(int x, int y, Object replacement) {
+		int pos = (26 * x) + y;
+		posPanel.remove(pos);
+		
+		if(replacement instanceof JButton) posPanel.add((JButton)replacement, pos);
+		else if(replacement instanceof JLabel) posPanel.add((JLabel)replacement, pos);
+		posPanel.revalidate();
+		posPanel.repaint();
+	}
+}
+
+
