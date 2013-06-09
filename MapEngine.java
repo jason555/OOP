@@ -17,7 +17,7 @@ class BgPanel extends JPanel {
 }
 
 public class MapEngine {
-  private JFrame bgFrame;
+	private JFrame bgFrame;
 	private JPanel bgPanel;
 	private JPanel posPanel;
 	JButton[][] mapButtons;
