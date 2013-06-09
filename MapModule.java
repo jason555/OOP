@@ -10,7 +10,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 class MapCalc {
-  private int[][] rooms, availablePaths;	// availablePaths는 path를 찾기 위함
+	private int[][] rooms, availablePaths;	// availablePaths는 path를 찾기 위함
 	ArrayList<Point> searchQueue;			// path를 찾기 위함
 	
 	// characters
@@ -181,12 +181,24 @@ class MapCalc {
 		
 		// 방 안에서 출발할 경우 가능한 시작 좌표들을 불러옴
 		int roomNum = isInRoom(x, y);
-		System.out.println(roomNum);
+	//	System.out.println(roomNum);
 		ArrayList<Point> roomExits = setRoomValue(roomNum);
 		
 		int exitCount = 0;
 		// queue reset
 		searchQueue = new ArrayList<Point>();
+	
+		// 특수한 방에 있을 때 다른 방으로 바로 이동하는 부분
+		if(roomNum == 1) {
+			searchQueue.add(new Point(22, 21, 0, 2));
+			searchQueue.add(new Point(21, 22, 0, 2));
+		} else if(roomNum == 4) {
+			searchQueue.add(new Point(23, 7, 0, 2));
+		} else if(roomNum == 8) {
+			searchQueue.add(new Point(9, 23, 0, 2));
+		} else if(roomNum == 10) {
+			searchQueue.add(new Point(6, 6, 0, 2));
+		}
 		
 		// 해당 위치의 값이 11~15가 되게 하여 findNextPath 함수에서 정상 처리되도록 함
 		// 그 직후 바로 queue에 넣음
@@ -251,7 +263,7 @@ class MapCalc {
 		// 방문 앞에서의 처리
 		if(this.availablePaths[x][y] == 3 || this.availablePaths[x][y] == 5) signals = 1;
 		else signals = 0;
-		if(signals != 2) this.availablePaths[x][y] = 20 + ttl;
+		this.availablePaths[x][y] = 20 + ttl;
 		
 		System.out.println(x + ", " + y + ", " + ttl + ", " + signals);
 		ttl--;
@@ -358,6 +370,15 @@ class MapCalc {
 		return playerImg[character];
 	}
 	
+	public void setPlayerPos(int character, int x, int y) {
+		mEngine.gridChange(playerPos[character][0], playerPos[character][1], mEngine.mapButtons[playerPos[character][0]][playerPos[character][1]]);
+		
+		playerPos[character][0] = x;
+		playerPos[character][1] = y;
+		
+		mEngine.gridChange(x, y, MapCalc.getCharacterImage(character));
+	}
+	
 }
 
 class Point {
@@ -414,6 +435,16 @@ class MoveActionListener implements ActionListener {
 			mEngine.gridChange(x, y, MapCalc.getCharacterImage(character));
 			MapCalc.setCharacterPosition(character, x, y);
 		}
+		
+		
+		for(int i=0 ; i<MapCalc.HEIGHT ; i++) {
+			for(int j=0 ; j<MapCalc.WIDTH ; j++) {
+				for(ActionListener al : mEngine.mapButtons[i][j].getActionListeners())
+					mEngine.mapButtons[i][j].removeActionListener(al);
+			//	mEngine.mapButtons[i][j].addActionListener(new NullActionListener());
+				mEngine.mapButtons[i][j].setBorder(new LineBorder(Color.WHITE, 1));
+			}
+		}
 	}
 	
 	public int roomEnter(int x, int y) {
@@ -432,10 +463,18 @@ class MoveActionListener implements ActionListener {
 }
 
 
+class NullActionListener implements ActionListener {
+	public void actionPerformed(ActionEvent e) {
+		
+	}
+}
+
+
 public class MapModule {
 	public static void main(String[] args) {
 		MapCalc map = new MapCalc();
 	//	map.printMap();
+		map.setPlayerPos(MapCalc.PLUM, 24, 22);
 		map.findPaths(MapCalc.PLUM, 11);
 	}
 }
